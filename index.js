@@ -12,18 +12,45 @@ user = {
    }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// All users will register an impression on the ab-test flag
 ldclient.once('ready', function() {
-  // TODO : Enter the key for your feature flag here
-  ldclient.variation("YOUR_FEATURE_FLAG_KEY", user, false, function(err, showFeature) {
-    if (showFeature) {
-      // application code to show the feature
-      console.log("Showing your feature to " + user.key );
+  ldclient.variation("ab-test", user, false, function(err, abTest) {
+    if (abTest) {
+      console.log("Showing experience A to " + user.key );
     } else {
-      // the code to run if the feature is off 
-      console.log("Not showing your feature to " + user.key);
+      console.log("Showing experience B to " + user.key);
     }
+
     ldclient.flush(function() {
       ldclient.close();
     });
   });
 });
+
+///////////////////////////////////////////////////////////////////////////////
+// Only users who recieve the show-feature flag will register an impression on the ab-test flag
+ldclient.once('ready', function() {
+  ldclient.variation("show-feature", user, false, function(err, showFeature) {
+    if(showFeature) {
+      console.log("Feature shown to " + user.key );
+      ldclient.variation("ab-test", user, false, function(err, abTest) {
+        if (abTest) {
+          console.log("Showing experience A to " + user.key );
+        } else {
+          console.log("Showing experience B to " + user.key);
+        }
+
+        ldclient.flush(function() {
+          ldclient.close();
+        });
+      });
+    } else {
+      console.log("Feature NOT shown to " + user.key );
+      ldclient.flush(function() {
+        ldclient.close();
+      });
+    }
+  });
+});
+///////////////////////////////////////////////////////////////////////////////
